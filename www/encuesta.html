@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html>
+<!--
+  * Please see the included README.md file for license terms and conditions.
+  -->
+<head>
+    <title>Blank Cordova Mobile App Project Template (Lite)</title>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <!-- see http://webdesign.tutsplus.com/tutorials/htmlcss-tutorials/quick-tip-dont-forget-the-viewport-meta-tag -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <style>
+        /* following two viewport lines are equivalent to the meta viewport statement above, needed for Windows */
+        /* see http://www.quirksmode.org/blog/archives/2014/05/html5_dev_conf.html and http://dev.w3.org/csswg/css-device-adapt/ */
+        @-ms-viewport { width: 100vw ; zoom: 100% ; }  @viewport { width: 100vw ; zoom: 100% ; }
+        @-ms-viewport { user-zoom: fixed ; }           @viewport { user-zoom: fixed ; }
+    </style>
+    <link rel="stylesheet" href="css/jquery.mobile-1.4.5.css" media="all"  type="text/css" />
+    <link rel="stylesheet" href="css/framework7.ios.min.css">
+    <link rel="stylesheet" href="css/framework7.ios.colors.min.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/estilo.css">
+    
+    <script src="cordova.js"></script>          <!-- phantom library, needed for Cordova api calls, added during build -->
+    <script src="xdk/init-dev.js"></script>     <!-- normalizes device and document ready events, see README for details -->
+    
+    <script type="text/javascript" src="js/jquery-2.0.3.min.js"></script>
+    <script type="text/javascript" src="js/framework7.min.js"></script>
+    <script src="js/app.js"></script>           <!-- recommended location of your JavaScript code relative to other JS files -->
+    <script src="js/my-app.js"></script>
+    
+    <script src="js/baseDatos.js"></script>
+    <script src="js/sincronizar.js"></script>
+    <script src="js/almacenamiento.js"></script>
+    <!--<script src="js/archivos.js"></script>-->
+
+    <script>
+        var encuesta  ={};
+        var preguntas =new Array();
+        var respuestas=new Array();
+        var cantidadPreguntas=0;
+        var nativoURL="";
+        var archivo={};
+        archivo.sistema=null;
+        $(document).ready(function(){
+            document.addEventListener("deviceready",function(){
+                var usuario=almacenamiento.dameUsuario();
+                if(usuario==null){
+                    window.location="login.html";
+                    return null;
+                }//if
+                
+                var idEncuesta=localStorage.getItem("idEncuesta");
+                if(idEncuesta!=null){
+                    base.selecciona("SELECT "
+                    +"  id, "
+                    +"  folio, "
+                    +"  nombre, "
+                    +"  encabezado, "
+                    +"  inicio, "
+                    +"  fin, "
+                    +"  preguntaColorFondo, "
+                    +"  preguntaColorFuente, "
+                    +"  respuestaColorFuente, "
+                    +"  imagen "
+                    +"FROM "
+                    +"  encuesta "
+                    +"WHERE "
+                    +"  id='"+idEncuesta+"' ",
+                    function(tx, resp){
+                        encuesta={
+                            id:                  resp.rows.item(0).id,
+                            folio:               resp.rows.item(0).folio,
+                            nombre:              resp.rows.item(0).nombre,
+                            encabezado:          resp.rows.item(0).encabezado,
+                            inicio:              resp.rows.item(0).inicio,
+                            fin:                 resp.rows.item(0).fin,
+                            preguntaColorFondo:  resp.rows.item(0).preguntaColorFondo,
+                            preguntaColorFuente: resp.rows.item(0).preguntaColorFuente,
+                            respuestaColorFuente:resp.rows.item(0).respuestaColorFuente,
+                            imagen:              resp.rows.item(0).imagen
+                        };
+
+                        //alert(JSON.stringify(encuesta));
+                        base.selecciona("SELECT "
+                        +"    id, "
+                        +"    encabezado, "
+                        +"    nombre, "
+                        +"    respuesta_padre_id, "
+                        +"    pregunta_tipo_id, "
+                        +"    obligatoria, "
+                        +"    encuesta_id, "
+                        +"    prioridad, "
+                        +"    finalizara "
+                        +"FROM "
+                        +"    pregunta "
+                        +"WHERE "
+                        +"    encuesta_id='"+idEncuesta+"' "
+                        +"ORDER BY "
+                        +"    prioridad ASC ",
+                        function(tx, resp){
+                            for(var i=0; i<=resp.rows.length-1; i++){
+                                if(resp.rows.item(i).respuesta_padre_id=="")
+                                    cantidadPreguntas++;
+                                preguntas[preguntas.length]={
+                                    id:                resp.rows.item(i).id,
+                                    encabezado:        resp.rows.item(i).encabezado,
+                                    nombre:            resp.rows.item(i).nombre,
+                                    respuesta_padre_id:resp.rows.item(i).respuesta_padre_id,
+                                    pregunta_tipo_id:  resp.rows.item(i).pregunta_tipo_id,
+                                    obligatoria:       resp.rows.item(i).obligatoria,
+                                    encuesta_id:       resp.rows.item(i).encuesta_id,
+                                    prioridad:         resp.rows.item(i).prioridad,
+                                    finalizara:        resp.rows.item(i).finalizara
+                                };
+                            }//for
+                            //alert(cantidadPreguntas);
+                            //alert(preguntas.length+" preguntas.");
+                            base.selecciona("SELECT "
+                            +"    r.id, "
+                            +"    r.nombre, "
+                            +"    r.nombreObservaciones, "
+                            +"    r.pregunta_id, "
+                            +"    r.finalizara, "
+                            +"    r.esImagen, "
+                            +"    r.imagen, "
+                            +"    r.ponderacion "
+                            +"FROM "
+                            +"    respuesta r "
+                            +"    INNER JOIN pregunta p ON p.id=r.pregunta_id "
+                            +"WHERE "
+                            +"    p.encuesta_id='"+idEncuesta+"' ",
+                            function(tx, resp){
+                                for(var i=0; i<=resp.rows.length-1; i++){
+                                    respuestas[respuestas.length]={
+                                        id:                 resp.rows.item(i).id,
+                                        nombre:             resp.rows.item(i).nombre,
+                                        nombreObservaciones:resp.rows.item(i).nombreObservaciones,
+                                        pregunta_id:        resp.rows.item(i).pregunta_id,
+                                        finalizara:         resp.rows.item(i).finalizara,
+                                        esImagen:           resp.rows.item(i).esImagen,
+                                        imagen:             resp.rows.item(i).imagen,
+                                        ponderacion:        resp.rows.item(i).ponderacion
+                                    };
+                                }//for
+                                //alert(JSON.stringify(preguntas));
+                                //alert(JSON.stringify(respuestas));
+                                //$("#encabezadoEncuesta").html(encuesta.nombre);
+                                $("#lblTitulo").html("<b>"+encuesta.nombre+"</b><br><br>"+encuesta.encabezado);//+"<br><br>Total de preguntas "+cantidadPreguntas
+                                
+                                window.requestFileSystem(LocalFileSystem.PERSISTENT,0,function(fs){
+                                    archivo.sistema=fs;
+                                    try{
+                                        nativoURL=archivo.sistema.root.toNativeURL();
+                                        try{
+                                            //alert(archivo.sistema.root.toNativeURL()+"Finvivir encuestador/logotipos/"+encuesta.imagen);
+                                            $("#imgLogo").attr("src", archivo.sistema.root.toNativeURL()+"Finvivir encuestador/logotipos/"+encuesta.imagen);
+                                        }catch(e){
+                                            //alert(""+e);
+                                        }//try
+                                    }catch(e){
+                                        alert("No se puede leer componente nativo "+e);
+                                    }//try
+                                   $("#lblEncuesta").html(escribePregunta("","",""));
+                                }, function(e){
+                                   $("#lblEncuesta").html(escribePregunta("","","")); 
+                                });
+
+                            });
+                        });
+                    });
+                }//if
+            },false);
+        });//function
+        
+        function escribePregunta(codi,idRespPadre,prefijo){
+            var mostrar=idRespPadre==''?"":"none";
+            var cont=0;
+            prefijo+=prefijo==""?"":".";
+            for(var i=0; i<=preguntas.length-1; i++){
+                if(preguntas[i].respuesta_padre_id==idRespPadre){//En la propiedad 'rel' almacenamos el indice de la pregunta
+                    cont++;
+                    if(jQuery.trim(preguntas[i].encabezado)!=""){
+                        codi+="<li class='item-content pregId"+preguntas[i].id+"' style='background:"+encuesta.preguntaColorFondo+"; color:"+encuesta.preguntaColorFuente+"; display:"+mostrar+";'>"
+                        +"   <div class='item-inner'>"
+                        +"       <div class='item-title' style='overflow:initial; white-space:initial; font-weight:bold; text-align:justify;'> "+preguntas[i].encabezado+"</div>"
+                        +"   </div>"
+                        +"</li>";
+                    }//if
+                    codi+="<li class='item-content pregunta pregId"+preguntas[i].id+"' rel='"+i+"' style='background:"+encuesta.preguntaColorFondo+"; color:"+encuesta.preguntaColorFuente+"; display:"+mostrar+";'>"
+                    +"   <div class='item-inner'>"
+                    +"       <div class='item-title' style='overflow:initial; white-space:initial;'>"+prefijo+cont+"º "+preguntas[i].nombre+"</div>"
+                    +"       <div class='item-after' style='color:"+encuesta.preguntaColorFuente+";'>"+(preguntas[i].obligatoria=='1'?"*":"")+"</div>"//<img src='img/candadito.png'>
+                    +"   </div>"
+                    +"</li>";
+                    //codi+=preguntas[i].nombre+"<br>";
+                    var idResp=new Array();
+                    if(preguntas[i].pregunta_tipo_id=="ABI"){
+                        codi+="<li class='item-content pregId"+preguntas[i].id+"' style='display:"+mostrar+";'>"
+                        +"   <div class='item-inner'>"
+                        +"       <div class='item-title'><input type='text' placeholder='R=' style='color:"+encuesta.respuestaColorFuente+";'></div>"
+                        +"   </div>"
+                        +"</li>";
+                    }else{
+                        for(var j=0; j<=respuestas.length-1; j++){
+                            if(respuestas[j].pregunta_id==preguntas[i].id){
+                                codi+="<li class='item-content pregId"+preguntas[i].id+"' style='color:"+encuesta.respuestaColorFuente+"; display:"+mostrar+";' onClick='activaObservacion(this);'>"
+                                +"   <div class='item-inner'>";
+                                if(preguntas[i].pregunta_tipo_id=="OPU"){
+                                    codi+="<div class='item-title' style='overflow:initial; white-space:initial;'><input name='radio"+preguntas[i].id+"' rel='"+(respuestas[j].finalizara=='1'?"finalizara":"")+"|"+i+"' type='radio' value='"+respuestas[j].id+"' onClick='activaSubPregunta(this);' style='zoom:2; vertical-align:middle;'>"+(respuestas[j].esImagen=='1'?"<img src=\""+nativoURL+"Finvivir encuestador/logotipos/"+respuestas[j].imagen+"\" alt='"+respuestas[j].ponderacion+"' height='40'>":respuestas[j].nombre)+"</div>";
+                                }else{
+                                    codi+="<div class='item-title' style='overflow:initial; white-space:initial;'><input type='checkbox' value='"+respuestas[j].id+"' onClick='activaObservacion(this);' style='zoom:2; vertical-align:middle;'>"+(respuestas[j].esImagen=='1'?"<img src=\""+nativoURL+"Finvivir encuestador/logotipos/"+respuestas[j].imagen+"\" alt='"+respuestas[j].ponderacion+"' height='40'>":respuestas[j].nombre)+"</div>";
+                                }//if
+                                codi+="   </div>"
+                                +"</li>";
+                                if(respuestas[j].nombreObservaciones!=""){
+                                    //pregId"+preguntas[i].id+"'
+                                    codi+="<li class='item-content respId"+respuestas[j].id+"' style='color:"+encuesta.respuestaColorFuente+"; display:none;'>"
+                                    +"   <div class='item-inner'>"
+                                    +"       <div class='item-title' style='overflow:initial; white-space:initial;'>"+respuestas[j].nombreObservaciones+"</div>"
+                                    +"   </div>"
+                                    +"</li>";
+                                    codi+="<li class='item-content respId"+respuestas[j].id+"' style='color:"+encuesta.respuestaColorFuente+"; display:none;'>"
+                                    +"   <div class='item-inner'>"
+                                    +"       <div class='item-title'><input type='text' placeholder='R=' rel='"+j+"' style='color:"+encuesta.respuestaColorFuente+";'></div>"
+                                    +"   </div>"
+                                    +"</li>";
+                                }//if
+                                //codi+="-"+respuestas[j].nombre+"<br>";
+                                idResp[idResp.length]=respuestas[j].id;
+                            }//if
+                        }//for
+                        for(var k=0; k<=idResp.length-1; k++){
+                            codi=escribePregunta(codi,idResp[k],prefijo+cont);
+                        }//for
+                    }//if
+                }//if
+            }//for
+            return codi;
+        }//function
+        
+        function activaSubPregunta(radio){
+            var nombre=$(radio).attr('name');
+            var hayFin=false;
+            for(var i=0; i<=$("input[name="+nombre+"]:radio").length-1; i++){
+                var fina=$($("input[name="+nombre+"]:radio")[i]).attr('rel').split("|")[0];
+                if(!hayFin && fina=='finalizara')
+                    hayFin=true;
+                activaSubPreguntaSegunRadio($("input[name="+nombre+"]:radio")[i]);
+                activaObservacion($("input[name="+nombre+"]:radio")[i]);
+            }//for
+            if(hayFin)
+                finalizaEncuestaRadio($("input[name="+nombre+"]:checked"));
+        }//function
+        
+        function finalizaEncuestaRadio(radio){
+            var fina=$(radio).attr("rel").split("|");
+            var siFi=fina[0]=="finalizara";
+            var luga=parseInt(fina[1]);
+            finalizaEncuesta(luga, siFi);
+        }//function
+        
+        function finalizaEncuesta(luga, siFi){
+            for(var i=luga+1; i<=$(".pregunta").length-1; i++){
+                var indi=$($(".pregunta")[i]).attr('rel');
+                if(siFi){
+                    desactivaDescendencia(indi);
+                }else{
+                    if(preguntas[indi].respuesta_padre_id=="")
+                        $(".pregId"+preguntas[indi].id).css("display",""); 
+                }//if
+            }//for
+        }//function
+        
+        function activaObservacion(check){
+            $(".respId"+check.value).css("display",check.checked?"":"none");
+            if(!check.checked)
+                $(".respId"+check.value+" input").val("");
+        }//function
+        
+        function activaSubPreguntaSegunRadio(radio){
+            var idResp=radio.value;
+            var activa=radio.checked;
+            for(var i=0; i<=preguntas.length-1; i++){
+                if(preguntas[i].respuesta_padre_id==idResp){
+                    if(activa){
+                        $(".pregId"+preguntas[i].id).css("display","");
+                        if(preguntas[i].finalizara=='1'){
+                            for(var j=0; j<=$(".pregunta").length-1; j++){
+                                var indi=$($(".pregunta")[j]).attr('rel');
+                                if(indi==i){
+                                    finalizaEncuesta(j,true);
+                                    break;
+                                }//if
+                            }//for
+                        }//if
+                    }else{
+                        desactivaDescendencia(i);//pasamos el indice donde encontramos la pregunta
+                        for(var j=0; j<=$(".pregunta").length-1; j++){
+                            var indi=$($(".pregunta")[j]).attr('rel');
+                            if(indi==i){
+                                finalizaEncuesta(j,false);
+                                break;
+                            }//if
+                        }//for
+                    }//if
+                }//if
+            }//for
+        }//function
+        
+        function desactivaDescendencia(indice){
+            var idPregunta=preguntas[indice].id;
+            var tipo=      preguntas[indice].pregunta_tipo_id;
+            $(".pregId"+idPregunta).css("display","none");
+            if(tipo=="ABI"){
+                $(".pregId"+idPregunta+" input").val("");
+            }else if(tipo=="OPC" || tipo=="OPU"){
+                for(var k=0; k<=$(".pregId"+idPregunta+" input:checked").length-1; k++){
+                    var idResp=$(".pregId"+idPregunta+" input:checked")[k].value;
+                    $(".respId"+idResp).css("display","none");
+                    $(".respId"+idResp+" input").val("");
+                    $(".pregId"+idPregunta+" input:checked")[0].checked=false;
+                }//for
+            }//if
+            for(var i=0; i<=respuestas.length-1; i++){
+                if(respuestas[i].pregunta_id==idPregunta){
+                    for(var j=0; j<=preguntas.length-1; j++){
+                        if(preguntas[j].respuesta_padre_id==respuestas[i].id){
+                            desactivaDescendencia(j);
+                        }//if
+                    }//for
+                }//if
+            }//for
+        }//function
+        
+        function revisar(){
+            var respondidas=new Array();
+            for(var i=0; i<=$(".pregunta").length-1; i++){//De la propiedad 'rel' sacamos el indice de la pregunta.
+                var indi=$($(".pregunta")[i]).attr('rel');
+                var visi=$(".pregunta")[i].style.display=="";
+                if(visi){
+                    var dondeVan=respondidas.length;
+                    //alert(preguntas[indi].nombre+" "+preguntas[indi].obligatoria+" "+preguntas[indi].pregunta_tipo_id);
+                    if(preguntas[indi].pregunta_tipo_id=='ABI'){
+                        var texto=$(".pregId"+preguntas[indi].id+" input").val().trim();
+                        texto=texto.replace(/'/g,"´");
+                        //alert("Abi "+texto);
+                        if(texto!=""){
+                            respondidas[respondidas.length]="INSERT INTO "
+                            +"  encuestaencuestadopregunta "
+                            +"  (encuestaencuestado_id, pregunta_id, respuesta_id, valor_texto) "
+                            +"VALUES "
+                            +"  ('_encuestaencuestado_id_','"+preguntas[indi].id+"',NULL,'"+texto+"')";
+                        }//if
+                    }else if(preguntas[indi].pregunta_tipo_id=='OPC' || preguntas[indi].pregunta_tipo_id=='OPU'){
+                        for(var j=0; j<=$(".pregId"+preguntas[indi].id+" input:checked").length-1; j++){
+                            var valor=$(".pregId"+preguntas[indi].id+" input:checked")[j].value;//La propiedad 'value' es el idRespuesta
+                            //alert("Opc "+valor);
+                            var texto="";
+                            if($(".respId"+valor).length>0){
+                                texto=$(".respId"+valor+" input").val().trim();
+                                texto=texto.replace(/'/g,"´");
+                                if(texto==""){
+                                    var indiResp=$(".respId"+valor+" input").attr('rel');
+                                    //alert("Falta completar la observación("+respuestas[indiResp].nombreObservaciones+") de la respuesta "+respuestas[indiResp].nombre+" de la pregunta "+preguntas[indi].nombre);
+                                    _mensaje("","Falta completar la observación("+respuestas[indiResp].nombreObservaciones+") de la respuesta "+respuestas[indiResp].nombre+" de la pregunta "+preguntas[indi].nombre,"Entendido");
+                                    return null;
+                                }//if
+                            }//if
+                            respondidas[respondidas.length]="INSERT INTO "
+                            +"  encuestaencuestadopregunta "
+                            +"  (encuestaencuestado_id, pregunta_id, respuesta_id, valor_texto) "
+                            +"VALUES "
+                            +"  ('_encuestaencuestado_id_','"+preguntas[indi].id+"','"+valor+"','"+texto+"')";
+                        }//for
+                    }//if
+                    if(preguntas[indi].obligatoria=='1' && respondidas.length==dondeVan){
+                        //alert("La pregunta "+preguntas[indi].nombre+" es obligatoria.");
+                        _mensaje("","La pregunta "+preguntas[indi].nombre+" es obligatoria.","Entendido");
+                        return null
+                    }//if
+                }//if
+            }//for
+            if(respondidas.length==0){
+                //alert("No se puede guardar, porque no se respondió ninguna pregunta.");
+                _mensaje("","No se puede guardar, porque no se respondió ninguna pregunta.","Entendido");
+                return null;
+            }else{
+                guardar(respondidas);
+            }//if
+            //alert(JSON.stringify(respondidas));
+        }//function
+        
+        var estaGuar=false;
+        function guardar(respondidas){
+            if(estaGuar){
+                return null
+            }else{
+                estaGuar=true;
+            }//if
+            var idUsuario =almacenamiento.dameUsuario().id;
+            var idEncuesta=localStorage.getItem("idEncuesta");
+            var hoy=new Date();
+            var fecha=hoy.getFullYear()+"-"+(hoy.getMonth()+1)+"-"+hoy.getDate()+" "+hoy.getHours()+":"+hoy.getMinutes()+":"+hoy.getSeconds();
+            var llave=generaLlave();
+            //alert(idUsuario+" "+idEncuesta+" "+fecha+" "+llave);
+            base.inserta("INSERT INTO "
+            +"  encuestaencuestado "
+            +"  (usuario_id, encuesta_id, fecha, actualizando) "
+            +"VALUES "
+            +"  ('"+idUsuario+"','"+idEncuesta+"','"+fecha+"','"+llave+"');"
+            ,function(tx, resp){
+                var idEncuEncu=resp.insertId;
+                //alert(idEncuEncu);
+                for(var i=0; i<=respondidas.length-1; i++){
+                    respondidas[i]=respondidas[i].replace('_encuestaencuestado_id_',idEncuEncu+"");
+                }//for
+                respondidas[respondidas.length]="UPDATE encuesta SET veces=veces+1 WHERE id='"+idEncuesta+"';"
+                base.ejecuta(respondidas,function(){
+                    //alert("Encuesta almacenada con éxito");
+                    _mensaje("¡Almacenamiento exitoso!","Encuestas almacenada con éxito","Entendido",function(){
+                       window.location='listaEncuestas.html'; 
+                    });
+                    estaGuar=false
+                });
+            });
+        }//function
+        
+        function generaLlave(){
+            var letr="1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            var llav="";
+            for(var i=0; i<=20-1; i++){
+                var azar=Math.floor(Math.random()*letr.length);
+                llav+=letr.substr(azar,1);
+            }//for
+            return llav;
+        }//function
+
+    </script>
+</head>
+
+<body>
+    <script src="js/menu.js"></script>
+    <div class="views">
+      <div class="view view-main">
+        <div class="pages navbar-fixed toolbar-fixed">
+          <div data-page="index" class="page">
+            <div class="navbar fondo-gris">
+              <div class="navbar-inner">
+                  <div class="col-40 h100">
+                      <div id="encabezadoEncuesta" class="azul bold" style="line-height: 60px;"><img src="img/logotipo.png" height="50" id="imgLogo"></div>
+                  </div>
+                  
+                  <div class="col-30 right"><a href="#" class="link icon-only open-panel"><i class="icon icon-bars"></i></a></div>
+              </div>
+            </div>
+            <div class="page-content pagina" >
+                <div class="content-block-title" id="lblTitulo" style="overflow:initial; white-space:initial; text-transform:none;"></div>
+                <div class="list-block">
+                    <ul id="lblEncuesta" style="overflow:initial; white-space:initial;">
+                    </ul>
+                </div>
+
+                <div class="row">
+                  <div class="col-10"> 
+                  </div>
+                  <div class="col-80">
+                    <div class="center button active azulBtn" onclick="/*for(var ii=0; ii<=10; ii++)*/ revisar();">Guardar encuesta</div>
+                  </div>
+                  <div class="col-10">
+                  </div>
+                </div>
+                
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+</body>
+</html>
+

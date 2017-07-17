@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<!--
+  * Please see the included README.md file for license terms and conditions.
+  -->
+<head>
+    <title>Blank Cordova Mobile App Project Template (Lite)</title>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+
+    <!-- see http://webdesign.tutsplus.com/tutorials/htmlcss-tutorials/quick-tip-dont-forget-the-viewport-meta-tag -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <style>
+        /* following two viewport lines are equivalent to the meta viewport statement above, needed for Windows */
+        /* see http://www.quirksmode.org/blog/archives/2014/05/html5_dev_conf.html and http://dev.w3.org/csswg/css-device-adapt/ */
+        @-ms-viewport { width: 100vw ; zoom: 100% ; }  @viewport { width: 100vw ; zoom: 100% ; }
+        @-ms-viewport { user-zoom: fixed ; }           @viewport { user-zoom: fixed ; }
+    </style>
+    <link rel="stylesheet" href="css/jquery.mobile-1.4.5.css" media="all"  type="text/css" />
+    <link rel="stylesheet" href="css/framework7.ios.min.css">
+    <link rel="stylesheet" href="css/framework7.ios.colors.min.css">
+    
+    <script src="cordova.js"></script>          <!-- phantom library, needed for Cordova api calls, added during build -->
+    <!--<script src="../plugins/cordova-sqlite-storage/www/SQLitePlugin.js"></script>-->
+    <script type="text/javascript" src="js/jquery-2.0.3.min.js"></script>
+    <script type="text/javascript" src="js/framework7.min.js"></script>
+    <script src="js/app.js"></script>           <!-- recommended location of your JavaScript code relative to other JS files -->
+    <script src="xdk/init-dev.js"></script>     <!-- normalizes device and document ready events, see README for details -->
+    <script language="JavaScript">
+        $(document).ready(function(){
+            document.addEventListener("deviceready", onDeviceReady, false);
+                
+        });
+        function onDeviceReady() {
+        
+            //alert(window.SQLitePlugin);
+            //alert(window.sqlitePlugin);
+            //alert(window.openDatabase);
+            //alert(window.cordova);
+            //window.sqlitePlugin.echoTest(function(){alert("bien");}, function(){alert("error");});
+            //alert("salio");
+            alert("entro a crear base");
+            db=window.openDatabase("Database", "1.0", "Cordova Demo", 200000);
+            alert("salio de crear base");
+            db.transaction(populateDB, errorCB, successCB);
+            db.transaction(insertDB, errorCB, successCB);
+            //db.transaction(queryDB, errorCB, successCB);
+            db.transaction(function(tx){
+                    tx.executeSql('SELECT * FROM DEMO', [], querySuccess, errorCB);
+                },
+            errorCB, successCB);
+            
+            alert("salio");
+        };
+        
+        function queryDB(tx) {
+            tx.executeSql('SELECT * FROM DEMO', [], querySuccess, errorCB);
+        }
+        function querySuccess(tx, results) {
+            var len = results.rows.length;
+            alert(len);
+            alert(results.rows.item(0).name);
+        }//function
+        function insertDB(tx) {
+            tx.executeSql('INSERT INTO DEMO (name,number) VALUES ("maria","1")');
+            }
+        function populateDB(tx) {
+            tx.executeSql('CREATE TABLE IF NOT EXISTS DEMO (id INTEGER PRIMARY KEY AUTOINCREMENT, name,number)');
+        }//function
+        
+        function errorCB(e){
+            alert("mal "+e);
+        }//error
+        function successCB(e){
+            alert("bien "+e);
+        }//bien
+    </script>
+</head>
+
+<body>
+    <p align="center"><img src="img/megaman.jpg" height="100"></p>
+    <textarea id="txtSalida" style="width:100%; height:300px;"></textarea>
+</body>
+</html>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<!--
+  * Please see the included README.md file for license terms and conditions.
+  -->
+<head>
+    <title>Blank Cordova Mobile App Project Template (Lite)</title>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+
+    <!-- see http://webdesign.tutsplus.com/tutorials/htmlcss-tutorials/quick-tip-dont-forget-the-viewport-meta-tag -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <style>
+        /* following two viewport lines are equivalent to the meta viewport statement above, needed for Windows */
+        /* see http://www.quirksmode.org/blog/archives/2014/05/html5_dev_conf.html and http://dev.w3.org/csswg/css-device-adapt/ */
+        @-ms-viewport { width: 100vw ; zoom: 100% ; }  @viewport { width: 100vw ; zoom: 100% ; }
+        @-ms-viewport { user-zoom: fixed ; }           @viewport { user-zoom: fixed ; }
+    </style>
+    <link rel="stylesheet" href="css/jquery.mobile-1.4.5.css" media="all"  type="text/css" />
+    <link rel="stylesheet" href="css/framework7.ios.min.css">
+    <link rel="stylesheet" href="css/framework7.ios.colors.min.css">
+
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/estilo.css">
+    
+    <script src="cordova.js"></script>          <!-- phantom library, needed for Cordova api calls, added during build -->
+    <script src="xdk/init-dev.js"></script>     <!-- normalizes device and document ready events, see README for details -->
+
+    <!--<script src="../plugins/cordova-sqlite-storage/www/SQLitePlugin.js"></script>-->
+    <script type="text/javascript" src="js/jquery-2.0.3.min.js"></script>
+    <script type="text/javascript" src="js/framework7.min.js"></script>
+    <script src="js/app.js"></script>           <!-- recommended location of your JavaScript code relative to other JS files -->
+    <script src="js/my-app.js"></script>
+
+    <script src="js/baseDatos.js"></script>
+    <script src="js/sincronizar.js"></script>
+    <script src="js/almacenamiento.js"></script>
+    
+    <script>
+        function salirAplicacion(){
+            almacenamiento.desloguear();
+            navigator.app.exitApp();
+        }//function
+        
+        $(document).ready(function(){
+            document.addEventListener("deviceready",
+            function(){
+                var usuario=almacenamiento.dameUsuario();
+                if(usuario!=null){
+                    window.location="listaEncuestas.html";
+                    return null;
+                }//if
+                document.getElementById('salir').addEventListener('click', salirAplicacion);                
+                $("#txtNombre").focus();
+            }
+            ,false);
+        });
+        function ingresar(){
+            //alert("Ingresar");
+            base.selecciona("SELECT id, nombre FROM usuario WHERE nombre='"+$("#txtNombre").val()+"';",function(tx,res){
+                //alert(res.rows.length);
+                if(res.rows.length>0){
+                    almacenamiento.loguear(res.rows.item(0).id, res.rows.item(0).nombre);
+                    base.selecciona("SELECT id FROM encuestaencuestado WHERE usuario_id!='"+res.rows.item(0).id+"' ",
+                    function(tx,res){
+                        var cons=new Array();
+                        for(var i=0; i<=res.rows.length-1; i++){
+                            cons[cons.length]="DELETE FROM encuestaencuestadopregunta WHERE encuestaencuestado_id='"+res.rows.item(i).id+"'";
+                            cons[cons.length]="DELETE FROM encuestaencuestado WHERE id='"+res.rows.item(i).id+"'";
+                        }//for
+                        if(cons.length==0){
+                            window.location="actualizar.html";
+                        }else{
+                            base.ejecuta(cons,function(){
+                                window.location="actualizar.html";
+                            });
+                        }//if
+                    });
+                }else{
+                    //alert("Usuario no existe.");
+                    _mensaje("","El usuario introducido no existe","Entendido");
+                }//if
+            });
+        }//function
+    </script>
+</head>
+
+<body>
+    <div class="views">
+      <div class="view view-main">
+        <div class="pages navbar-fixed toolbar-fixed">
+          <div data-page="index" class="page pagina">
+
+            <div class="navbar fondo-gris">
+              <div class="navbar-inner">
+                  <div class="col-40 h100">
+                      <img src="img/logotipo.png" class="h80 paddingTop5p">
+                  </div>
+                  <div class="col-60 azul text-18 text-right">Aplicación <br/>de encuestas</div>
+
+              </div>
+            </div>
+            <div class="page-content">
+                
+                <div class="content-block-title azul">Ingreso a la aplicación:</div>
+                <div class="list-block">                    
+                  <ul>
+                    <li>
+                      <div class="item-content">
+                        <div class="item-inner">
+                          <div class="item-title label gris">Usuario</div>
+
+
+                          <div class="item-input">
+                            <input type="text" placeholder="" id="txtNombre" maxlength="200" style="width:120px;">
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+                <div class="row">
+                  <div class="col-33">
+                    
+                  </div>
+                  <div class="col-33">
+                    <div class="center button active azulBtn" onclick="ingresar();">Ingresar</div><br>
+                    <div class="center button active azulBtn" id='salir'>Salir</div>
+                  </div>
+                  <div class="col-33">
+                    
+                  </div>
+                </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+</body>
+</html>

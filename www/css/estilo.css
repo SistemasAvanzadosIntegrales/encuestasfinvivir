@@ -1,0 +1,105 @@
+.azul{
+    color:#0074aa;
+}
+.azulBtn{
+    background-color: #0187ce;
+    height: 40px;
+    padding-top: 5px;
+    font-size: 16px;
+}
+.gris{
+    color: #acacac;
+}
+
+.bold{
+    font-weight: bold;
+}
+.text-16{
+    font-size: 16px
+}
+.text-18{
+    font-size: 18px
+}
+.text-20{
+    font-size: 20px
+}
+.text-22{
+    font-size: 22px
+}
+.text-24{
+    font-size: 24px
+}
+.text-center{
+    text-align: center;
+}
+.text-left{
+    text-align: left;
+}
+.text-right{
+    text-align: right;
+}
+.text-justify{
+    text-align: justify;
+}
+
+.h100{
+    height: 100%;
+}
+.h90{
+    height: 90%;
+}
+.h80{
+    height: 80%;
+}
+.hauto{
+    height: auto;
+}
+.h100px{
+    height: 100px;
+}
+
+.titulo{
+    background-color: #0187ce;
+    width: 100%;
+    height: 60px;
+    padding: 0 10px;
+    margin: 0px;
+    color: #fff;
+    font-size: 18px;
+    line-height: 60px;
+}
+.fondo-gris{
+    background-color: #e6e6e6
+}
+
+.sinPadding{
+    padding: 0;
+}
+.paddingTop5p{
+    padding-top: 5%;
+}
+.paddingTop10p{
+    padding-top: 10%;
+}
+.padding10{
+    padding: 10%;
+}
+.padding5{
+    padding: 5%;
+}
+.marginTop15px{
+    margin-top: 15px;
+}
+
+.w30h40px{
+    width: 30px !important;
+    height: 40px;
+}
+.sinMarginLeft{
+    margin-left: 0px;
+}
+.pagina{
+    background:url(../img/fondo.png) no-repeat;
+    background-size:100%;
+    background-position:center bottom;
+}

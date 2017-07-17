@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Blank Cordova Mobile App Project Template (Lite)</title>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+
+    <!-- see http://webdesign.tutsplus.com/tutorials/htmlcss-tutorials/quick-tip-dont-forget-the-viewport-meta-tag -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <style>
+        /* following two viewport lines are equivalent to the meta viewport statement above, needed for Windows */
+        /* see http://www.quirksmode.org/blog/archives/2014/05/html5_dev_conf.html and http://dev.w3.org/csswg/css-device-adapt/ */
+        @-ms-viewport { width: 100vw ; zoom: 100% ; }  @viewport { width: 100vw ; zoom: 100% ; }
+        @-ms-viewport { user-zoom: fixed ; }           @viewport { user-zoom: fixed ; }
+    </style>
+    <link rel="stylesheet" href="css/jquery.mobile-1.4.5.css" media="all"  type="text/css" />
+    <link rel="stylesheet" href="css/framework7.ios.min.css">
+    <link rel="stylesheet" href="css/framework7.ios.colors.min.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/estilo.css">
+    
+    <script src="cordova.js"></script>          <!-- phantom library, needed for Cordova api calls, added during build -->
+    <script src="xdk/init-dev.js"></script>     <!-- normalizes device and document ready events, see README for details -->
+    
+    <script type="text/javascript" src="js/jquery-2.0.3.min.js"></script>
+    <script type="text/javascript" src="js/framework7.min.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/my-app.js"></script>
+    
+    <script src="js/baseDatos.js"></script>
+    <script src="js/sincronizar.js"></script>
+    <script src="js/almacenamiento.js"></script>
+    <script>
+        $(document).ready(function(){
+            document.addEventListener("deviceready",function(){
+                var usuario=almacenamiento.dameUsuario();
+                if(usuario==null){
+                    window.location="login.html";
+                    return null;
+                }else{
+                    //$("#lblUsuario").html(usuario.nombre);
+                }//if
+            },false);
+        });//function
+        
+        var vecesClick=0;
+        function dioClick(){
+            vecesClick++
+            if(vecesClick==10){
+                muestraTablas();
+            }//if
+        }//function
+        function muestraTablas(){
+            escribeTabla("usuario");
+            escribeTabla("encuesta");
+            escribeTabla("usuarioencuesta");
+            escribeTabla("pregunta");
+            escribeTabla("respuesta");
+            escribeTabla("encuestaencuestado");
+            escribeTabla("encuestaencuestadopregunta");
+        }//function
+        function escribeTabla(tabla){
+            base.selecciona("SELECT * FROM "+tabla,
+                function(tx, resultado){
+                try{
+                    var ca=tabla+"<br>";
+                    ca+="<table border='1'>";
+                    for(var i=0; i<=resultado.rows.length-1; i++){
+                        if(i==0){
+                            ca+="<tr>";
+                            for(var prop in resultado.rows.item(i)){
+                                ca+="<th>"+prop+"</th>";
+                            }//for
+                            ca+="</tr>";
+                        }//if
+                        ca+="<tr>";
+                        for(var prop in resultado.rows.item(i)){
+                            ca+="<td>"+resultado.rows.item(i)[prop]+"</td>";
+                        }//for
+                        ca+="</tr>";
+                    }//for
+                    ca+="</table>";
+                    $("#lblTablas").html($("#lblTablas").html()+ca);
+                }catch(e){
+                    alert(e);
+                }
+                }//function
+            );            
+        }//function
+    </script>
+</head>
+
+<body>
+    <script src="js/menu.js"></script>
+    <div class="views">
+      <div class="view view-main">
+        <div class="pages navbar-fixed toolbar-fixed">
+          <div data-page="index" class="page">
+            <div class="navbar fondo-gris">
+              <div class="navbar-inner">
+                  <div class="col-40 h100">
+                      <div class="azul bold" style="line-height: 60px;">Acerca de:</div>
+                  </div>
+                  <!--<div class="col-30 right"><a href="#" class="link icon-only" onclick="actualizarDatos();"><img src="img/reload.png" class="h80 paddingTop5p"></a></div>-->
+                  <div class="col-30 right"><a href="#" class="link icon-only open-panel"><i class="icon icon-bars"></i></a></div>
+                </div>
+            </div>
+            <div class="page-content pagina">
+                <!--<div class="col-100 list-block  center marginTop15px">
+                        <ul> 
+                            <li class="item-content fondo-gris">
+                            <span id="lblUsuario"></span>
+                            </li>
+                        </ul>
+                </div>-->
+                <div class="row" style="padding-top:44px;">
+                    <div class="col-100 padding5">
+                        Aplicación de Encuestas Finvivir Ver 1.0.3<br />
+                        Compilación 1.0.3<br />
+                        Fecha de actualización 28-11-2016
+                    </div>
+                    <div class="col-100 text-center">
+                        <img src="img/logotipo.png" class="paddingTop5p" onClick="dioClick();">
+                    </div>
+                </div>                
+                <div id="lblTablas"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+</body>
+</html>
+

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<!--
+  * Please see the included README.md file for license terms and conditions.
+  -->
+<head>
+    <title>Blank Cordova Mobile App Project Template (Lite)</title>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+
+    <!-- see http://webdesign.tutsplus.com/tutorials/htmlcss-tutorials/quick-tip-dont-forget-the-viewport-meta-tag -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <style>
+        /* following two viewport lines are equivalent to the meta viewport statement above, needed for Windows */
+        /* see http://www.quirksmode.org/blog/archives/2014/05/html5_dev_conf.html and http://dev.w3.org/csswg/css-device-adapt/ */
+        @-ms-viewport { width: 100vw ; zoom: 100% ; }  @viewport { width: 100vw ; zoom: 100% ; }
+        @-ms-viewport { user-zoom: fixed ; }           @viewport { user-zoom: fixed ; }
+    </style>
+    <link rel="stylesheet" href="css/jquery.mobile-1.4.5.css" media="all"  type="text/css" />
+    <link rel="stylesheet" href="css/framework7.ios.min.css">
+    <link rel="stylesheet" href="css/framework7.ios.colors.min.css">
+
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/estilo.css">
+    
+    <script src="cordova.js"></script>          <!-- phantom library, needed for Cordova api calls, added during build -->
+    <!--<script src="../plugins/cordova-sqlite-storage/www/SQLitePlugin.js"></script>-->
+    <script src="xdk/init-dev.js"></script>     <!-- normalizes device and document ready events, see README for details -->
+    
+    <script type="text/javascript" src="js/framework7.min.js"></script>
+    <script type="text/javascript" src="js/jquery-2.0.3.min.js"></script>
+    <script src="js/app.js"></script>           <!-- recommended location of your JavaScript code relative to other JS files -->
+    <script src="js/my-app.js"></script>
+
+    <script src="js/baseDatos.js"></script>
+    <script src="js/sincronizar.js"></script>
+    <script src="js/almacenamiento.js"></script>
+    <script>
+        $(document).ready(function(){
+            document.addEventListener("deviceready",llenaEncuestas,false);
+        });//function
+        
+        function llenaEncuestas(){
+            var usuario=almacenamiento.dameUsuario();
+            if(usuario==null){
+                window.location="login.html";
+                return null;
+            }//if
+            
+            base.selecciona("SELECT "
+            +"  e.id, "
+            +"  e.folio, "
+            +"  e.nombre, "
+            +"  u.id idUsuario, "
+            +"  u.nombre usuario, "
+            +"  COUNT(ee.id) cantidad "
+            +"FROM "
+            +"  encuesta e "
+            +"  LEFT JOIN usuarioencuesta ue ON e.id=ue.encuesta_id AND ue.usuario_id='"+usuario.id+"' "
+            +"  LEFT JOIN encuestaencuestado ee ON ee.encuesta_id=e.id "
+            +"  LEFT JOIN usuario u ON u.id=ee.usuario_id "
+            +"WHERE "
+            +"  IFNULL(ee.id,0)!=0 OR ue.usuario_id='"+usuario.id+"' "
+            +"GROUP BY "
+            +"  e.id, u.id ",
+            function(tx, resu){
+                //alert(resu.rows.length);
+                var temp="";
+                for(var i=0; i<=resu.rows.length-1; i++){
+                    temp+="<li> "
+                    +"    <div class='item-inner'> "
+                    +"      <div class='item-title encuChk'>&nbsp;&nbsp;<input value='"+resu.rows.item(i).id+"' type='checkbox' style='zoom:2; vertical-align:middle;'>"+resu.rows.item(i).nombre+(resu.rows.item(i).usuario+""!='null' && usuario.id!=resu.rows.item(i).idUsuario?"("+resu.rows.item(i).usuario+")":"")+"</div> "
+                    +"      <div class='item-after'>"+(resu.rows.item(i).cantidad==0?"<img src='img/bien.png'>":resu.rows.item(i).cantidad)+"</div> "
+                    +"    </div> "
+                    +"</li> ";
+                }//for
+                $("#lblEncuestas").html(temp);//"+resu.rows.item(i).folio+"
+            }//function
+            );
+        }//function
+        
+        function seleccionarTodos(chk){
+            $("input:checkbox").each(function(){
+               this.checked=chk.checked;
+            });
+        }//function
+        
+        var estaSinc=false;
+        function sincronizalas(){
+            if(estaSinc){
+                return null
+            }else{
+                estaSinc=true;
+            }//if
+                
+            var sinc=new Array();
+            for(var j=0; j<=$(".encuChk input:checked").length-1; j++){
+                sinc[sinc.length]=$(".encuChk input:checked")[j].value;
+            }//for
+            //alert(sinc);
+            sincronizar.encuestas(sinc, termino);
+        }//function
+        
+        function termino(){
+            //alert("Encuestas sicronizadas");
+            estaSinc=false;
+            _mensaje("¡Sincronización exitosa!","Encuestas sicronizadas","Entendido", function(){
+                window.location=window.location;
+            });
+        }//function
+    </script>
+</head>
+
+<body>
+    <script src="js/menu.js"></script>
+    <div class="views">
+      <div class="view view-main">
+        <div class="pages navbar-fixed toolbar-fixed">
+          <div data-page="index" class="page">
+
+            <div class="navbar fondo-gris">
+              <div class="navbar-inner">
+                  <div class="col-40 h100">
+                      <div class="azul bold" style="line-height: 60px;">Sincronización:</div>
+                  </div>
+                  <!--<div class="col-30 right"><a href="#" class="link icon-only" onclick="actualizarDatos();"><img src="img/reload.png" class="h80 paddingTop5p"></a></div>-->
+                  <div class="col-30 right"><a href="#" class="link icon-only open-panel"><i class="icon icon-bars"></i></a></div>
+
+              </div>
+            </div>
+            <div class="page-content pagina">
+                
+
+                <div class="content-block-title azul">Encuestas listas para sincronizar:</div>
+                <div class="titulo"><input type='checkbox' onClick='seleccionarTodos(this);' style='zoom:2; vertical-align:middle;'>Seleccionar todos los elementos</div>
+                
+                <div class="list-block">
+                    <ul id='lblEncuestas'>
+                    </ul>
+                </div>
+                
+                <div class="row">
+                  <div class="col-20"> 
+                  </div>
+                  <div class="col-60">
+                    <div class="center" style="text-align:center;" id="lblSincronizando"></div>
+                  </div>
+                  <div class="col-20">
+                  </div>
+                </div>
+                
+                <div class="row">
+                  <div class="col-10"> 
+                  </div>
+                  <div class="col-80">
+                    <div class="center button active azulBtn" onclick="JavaScript:sincronizalas();">Sincronizar datos</div>
+                  </div>
+                  <div class="col-10">
+                  </div>
+                </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+</body>
+</html>
+

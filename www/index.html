@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<!--
+  * Please see the included README.md file for license terms and conditions.
+  -->
+<head>
+    <title>Blank Cordova Mobile App Project Template (Lite)</title>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <!-- see http://webdesign.tutsplus.com/tutorials/htmlcss-tutorials/quick-tip-dont-forget-the-viewport-meta-tag -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <style>
+        /* following two viewport lines are equivalent to the meta viewport statement above, needed for Windows */
+        /* see http://www.quirksmode.org/blog/archives/2014/05/html5_dev_conf.html and http://dev.w3.org/csswg/css-device-adapt/ */
+        @-ms-viewport { width: 100vw ; zoom: 100% ; }  @viewport { width: 100vw ; zoom: 100% ; }
+        @-ms-viewport { user-zoom: fixed ; }           @viewport { user-zoom: fixed ; }
+    </style>
+    <link rel="stylesheet" href="css/jquery.mobile-1.4.5.css" media="all"  type="text/css" />
+    <link rel="stylesheet" href="css/framework7.ios.min.css">
+    <link rel="stylesheet" href="css/framework7.ios.colors.min.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/estilo.css">
+    
+    <script src="cordova.js"></script>          <!-- phantom library, needed for Cordova api calls, added during build -->
+    <script src="xdk/init-dev.js"></script>     <!-- normalizes device and document ready events, see README for details -->
+    <!--<script src="../plugins/cordova-sqlite-storage/www/SQLitePlugin.js"></script>-->
+    <script type="text/javascript" src="js/jquery-2.0.3.min.js"></script>
+    <script type="text/javascript" src="js/framework7.min.js"></script>
+    <script src="js/app.js"></script>           <!-- recommended location of your JavaScript code relative to other JS files -->
+    <script src="js/my-app.js"></script>
+    
+    <script src="js/baseDatos.js"></script>
+    <script src="js/sincronizar.js"></script>
+    <script src="js/almacenamiento.js"></script>
+    <script src="js/archivos.js"></script>
+
+    
+    <script language="JavaScript">
+        function imprime(txt){
+            $("#txtSalida").val($("#txtSalida").val()+txt);
+        }//function
+        
+        $(document).ready(function(){
+            document.addEventListener("deviceready",
+            function(){
+                var actualizo=almacenamiento.dameActualizo();
+                if(actualizo!=null && actualizo+""=="true"){
+                    window.location="login.html";
+                    return null;
+                }//if
+                imprime("Actualizando datos...");
+                //imprime("\r\nCreando base de datos...");
+                base.crearBaseDeDatos(function(){
+                    //imprime("\r\nCargando usuarios...");
+                    //alert("sss");
+                    sincronizar.dameUsuarios(function(){
+                        //alert("hola");
+                        terminoSincronizar();
+                    },
+                    function(){
+                        window.location='login.html';
+                    });
+                });
+                
+                //window.location='login.html'
+            }
+            ,false);
+        });
+        
+        function terminoSincronizar(){
+            //alert("Llego");
+            almacenamiento.actualizo(true);
+            var deDonde=almacenamiento.dameDeDonde();
+            deDonde="login.html";
+            setTimeout("window.location='"+deDonde+"';",1000);
+        }//function
+    </script>
+</head>
+
+<body class='pagina'>
+    <p align="center"><img src="img/logotipo.png" height="100"><br><img src="img/spinner.gif"></span></p>
+    <textarea id="txtSalida" style="width:100%; height:300px; display:; background:transparent; border:none;"></textarea>
+</body>
+</html>

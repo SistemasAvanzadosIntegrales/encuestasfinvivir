@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<!--
+  * Please see the included README.md file for license terms and conditions.
+  -->
+<head>
+    <title>Blank Cordova Mobile App Project Template (Lite)</title>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+
+    <!-- see http://webdesign.tutsplus.com/tutorials/htmlcss-tutorials/quick-tip-dont-forget-the-viewport-meta-tag -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <style>
+        /* following two viewport lines are equivalent to the meta viewport statement above, needed for Windows */
+        /* see http://www.quirksmode.org/blog/archives/2014/05/html5_dev_conf.html and http://dev.w3.org/csswg/css-device-adapt/ */
+        @-ms-viewport { width: 100vw ; zoom: 100% ; }  @viewport { width: 100vw ; zoom: 100% ; }
+        @-ms-viewport { user-zoom: fixed ; }           @viewport { user-zoom: fixed ; }
+    </style>
+    <link rel="stylesheet" href="css/jquery.mobile-1.4.5.css" media="all"  type="text/css" />
+    <link rel="stylesheet" href="css/framework7.ios.min.css">
+    <link rel="stylesheet" href="css/framework7.ios.colors.min.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/estilo.css">
+    
+    <script src="cordova.js"></script>          <!-- phantom library, needed for Cordova api calls, added during build -->
+    <!--<script src="../plugins/cordova-sqlite-storage/www/SQLitePlugin.js"></script>-->
+    <script src="xdk/init-dev.js"></script>     <!-- normalizes device and document ready events, see README for details -->
+    <script type="text/javascript" src="js/framework7.min.js"></script>
+    <script type="text/javascript" src="js/jquery-2.0.3.min.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/my-app.js"></script>
+ 
+    <script src="js/baseDatos.js"></script>
+    <script src="js/sincronizar.js"></script>
+    <script src="js/almacenamiento.js"></script>
+    <script>
+        $(document).ready(function(){
+            document.addEventListener("deviceready",llenaEncuestas,false);
+             var $$ = Dom7;
+        
+            $('.limpiadorContador').on('click', function () {
+                  myApp.modal({
+                    title:  '¿Limpiar contadores?',
+                    text: "Si continua esta acción, los contadores, tendran valor inicial '0' ",
+                    buttons: [
+                      {
+                        text: 'Aceptar',
+                        onClick: function() {
+                            base.ejecuta(["UPDATE encuesta SET veces='0' WHERE 1=1;"],function(){
+                                window.location=window.location;
+                                //console.log("contadores limpiados");
+                            });
+                        }
+                      },
+                      {
+                        text: 'Cancelar',
+                        onClick: function() {
+                            console.log("contadores intactos");
+                        }
+                      }
+                    ]
+                  })
+            });
+
+        });//function
+        
+        function llenaEncuestas(){
+            var usuario=almacenamiento.dameUsuario();
+            if(usuario==null){
+                window.location="login.html";
+                return null;
+            }//if
+            
+            base.selecciona("SELECT "
+            +"    e.id, "
+            +"    e.folio, "
+            +"    e.nombre, "
+            +"    e.veces "
+            +"FROM "
+            +"    usuarioencuesta ue "
+            +"    INNER JOIN encuesta e ON e.id=ue.encuesta_id "
+            +"WHERE "
+            +"    ue.usuario_id='"+usuario.id+"' ",
+            function(tx, resu){
+                //alert(resu.rows.length);
+                var temp="";
+                for(var i=0; i<=resu.rows.length-1; i++){
+                    temp+="<li> "
+                    +"  <a href='#' class='item-link item-content' style=\"padding-left:0px;\"> "
+                    +"    <div class='item-inner' style=\"padding-left:0px;\"> "
+                    +"      <div class='item-title' style=\"padding-left:15px;\">"+resu.rows.item(i).nombre+"</div> "
+                    +"      <div class='item-after'>"+resu.rows.item(i).veces+"</div> "
+                    +"    </div> "
+                    +"  </a> "
+                    +"</li> ";
+                }//for
+                $("#lblEncuestas").html(temp);//resu.rows.item(i).folio+" "
+            }//function
+            );
+        }//function
+
+        function limpiar(){
+            myApp.confirm("Si continua esta acción, los contadores, tendran valor inicial '0' ", '¿Limpiar contadores?', 
+            function(){
+                base.ejecuta(["UPDATE encuesta SET veces='0' WHERE 1=1;"],function(){
+                    window.location=window.location;
+                    //console.log("contadores limpiados");
+                });
+            },function () {
+                console.log("contadores intactos");
+              }
+            );
+        }//function
+
+    </script>
+</head>
+
+<body>
+    <script src="js/menu.js"></script>
+    <div class="views">
+      <div class="view view-main">
+        <div class="pages navbar-fixed toolbar-fixed">
+          <div data-page="index" class="page">
+            <div class="navbar fondo-gris">
+              <div class="navbar-inner">
+                  <div class="col-40 h100">
+                       <div class="azul bold" style="line-height: 60px;">Encuestas aplicadas:</div>
+                  </div>
+                  <div class="col-30 right"><!--<a href="#" class="link icon-only" onclick="window.location='sincronizacion.html'"><img src="img/reload.png" class="h80 paddingTop5p"></a>--></div>
+                  <div class="col-30 right"><a href="#" class="link icon-only open-panel"><i class="icon icon-bars"></i></a></div>
+              </div>
+            </div>
+            <div class='page-content pagina'>
+                <!-- <div class='modal {{#unless buttons}}modal-no-buttons{{/unless}}'>
+                  <div class='modal-inner'>
+                    {{#if title}}
+                      <div class='modal-title'>{{title}}</div>
+                    {{/if}}
+                    {{#if text}}
+                       <div class='modal-text'>{{text}}</div>
+                    {{/if}}
+                    {{#if afterText}}
+                      {{afterText}}
+                    {{/if}}
+                  </div>
+                  {{#if buttons}}
+                    <div class='modal-buttons'>
+                      {{#each buttons}}
+                        <span class="modal-button {{#if bold}}modal-button-bold{{/if}}">{{text}}</span>
+                      {{/each}}
+                    </div>
+                  {{/if}}
+                </div> -->
+                <div class="content-block-title azul">Mis encuestas aplicadas:</div>
+
+                <div class="list-block">
+                    <ul id='lblEncuestas'>
+                    </ul>
+                </div>
+
+                <div class="row">
+                  <div class="col-10"> 
+                  </div>
+                  <div class="col-80">
+                    <div class="center button active azulBtn limpiadorContador" id="" onclick="">Limpiar Contadores</div>
+                  </div>
+                  <div class="col-10">
+                  </div>
+                </div>
+
+                
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+</body>
+</html>
+

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<!--
+  * Please see the included README.md file for license terms and conditions.
+  -->
+<head>
+    <title>Blank Cordova Mobile App Project Template (Lite)</title>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+
+    <!-- see http://webdesign.tutsplus.com/tutorials/htmlcss-tutorials/quick-tip-dont-forget-the-viewport-meta-tag -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <style>
+        /* following two viewport lines are equivalent to the meta viewport statement above, needed for Windows */
+        /* see http://www.quirksmode.org/blog/archives/2014/05/html5_dev_conf.html and http://dev.w3.org/csswg/css-device-adapt/ */
+        @-ms-viewport { width: 100vw ; zoom: 100% ; }  @viewport { width: 100vw ; zoom: 100% ; }
+        @-ms-viewport { user-zoom: fixed ; }           @viewport { user-zoom: fixed ; }
+    </style>
+    <link rel="stylesheet" href="css/jquery.mobile-1.4.5.css" media="all"  type="text/css" />
+    <link rel="stylesheet" href="css/framework7.ios.min.css">
+    <link rel="stylesheet" href="css/framework7.ios.colors.min.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/estilo.css">
+    
+    <script src="cordova.js"></script>          <!-- phantom library, needed for Cordova api calls, added during build -->
+    <!--<script src="../plugins/cordova-sqlite-storage/www/SQLitePlugin.js"></script>-->
+    <script src="xdk/init-dev.js"></script>     <!-- normalizes device and document ready events, see README for details -->
+    <script type="text/javascript" src="js/framework7.min.js"></script>
+    <script type="text/javascript" src="js/jquery-2.0.3.min.js"></script>
+    <script src="js/app.js"></script>           <!-- recommended location of your JavaScript code relative to other JS files -->
+    <script src="js/my-app.js"></script>
+    
+    
+    <script src="js/baseDatos.js"></script>
+    <script src="js/sincronizar.js"></script>
+    <script src="js/almacenamiento.js"></script>
+    <script>
+        $(document).ready(function(){
+            document.addEventListener("deviceready",llenaEncuestas,false);
+        });//function
+        
+        function llenaEncuestas(){
+            var usuario=almacenamiento.dameUsuario();
+            if(usuario==null){
+                window.location="login.html";
+                return null;
+            }//if
+            //alert(usuario.id+","+usuario.nombre);
+            base.selecciona("SELECT "
+            +"    e.id, "
+            +"    e.folio, "
+            +"    e.nombre "
+            +"FROM "
+            +"    usuarioencuesta ue "
+            +"    INNER JOIN encuesta e ON e.id=ue.encuesta_id "
+            +"WHERE "
+            +"    ue.usuario_id='"+usuario.id+"' "
+            +"    AND inicio<=DATE('now') AND (fin='1900-01-01' OR fin>=DATE('now')) "
+            ,
+            function(tx, resu){
+                //alert(resu.rows.length);
+                var temp="";
+                for(var i=0; i<=resu.rows.length-1; i++){
+                    temp+="<li> "
+                    +"  <a href='#' onClick=\"irAEncuesta("+resu.rows.item(i).id+");\" class='item-link item-content'> "
+                    +"    <div class='item-media'><img src=\"img/list.png\"><i class='icon icon-f7'></i></div> "
+                    +"    <div class='item-inner sinMarginLeft' style='margin-left:0px;'> "
+                    +"      <div class='item-title'>"+resu.rows.item(i).nombre+"</div> "
+                    +"      <div class='item-after'> </div> "
+                    +"    </div> "
+                    +"  </a> "
+                    +"</li> ";
+                }//for
+                $("#lblEncuestas").html(temp);//resu.rows.item(i).folio+" "+
+            }//function
+            );
+        }//function
+        
+        function irAEncuesta(idEncuesta){
+            localStorage.setItem("idEncuesta",idEncuesta);
+            window.location="encuesta.html";
+        }//function
+        
+        function buscarEncuestas(){
+            var usuario=almacenamiento.dameUsuario();
+            
+            base.selecciona("SELECT "
+            +"    e.id, "
+            +"    e.folio, "
+            +"    e.nombre "
+            +"FROM "
+            +"    usuarioencuesta ue "
+            +"    INNER JOIN encuesta e ON e.id=ue.encuesta_id "
+            +"WHERE "
+            +"    ue.usuario_id='"+usuario.id+"' AND e.nombre LIKE '%"+$("#autocomplete").val()+"%'"
+            +"    AND inicio<=DATE('now') AND (fin='1900-01-01' OR fin>=DATE('now')) "
+            +"ORDER BY "
+            +"    e.id DESC "
+            ,
+            function(tx, resu){
+                var temp="";
+                for(var i=0; i<=resu.rows.length-1; i++){
+                    temp+="<li> "
+                    +"  <a href='#' onClick=\"irAEncuesta("+resu.rows.item(i).id+");\" class='item-link item-content'> "
+                    +"    <div class='item-media'><img src=\"img/list.png\"><i class='icon icon-f7'></i></div> "
+                    +"    <div class='item-inner sinMarginLeft' style='margin-left:0px;'> "
+                    +"      <div class='item-title'>"+resu.rows.item(i).nombre+"</div> "
+                    +"      <div class='item-after'> </div> "
+                    +"    </div> "
+                    +"  </a> "
+                    +"</li> ";
+                }//for     resu.rows.item(i).folio+" "+
+                $("#lblEncuestas").html(temp);
+            }//function
+            );
+        }//function
+    </script>
+</head>
+
+<body> 
+
+    <script src="js/menu.js"></script>
+    <div class="views">
+      <div class="view view-main">
+        <div class="pages navbar-fixed toolbar-fixed">
+          <div data-page="index" class="page">
+
+            <div class="navbar fondo-gris">
+              <div class="navbar-inner">
+                 
+                      <div class="col-40 h100">
+                          <img src="img/logotipo.png" class="h80 paddingTop5p">
+                      </div>
+                    <!--<div class="col-30 right"><a href="#" class="link icon-only" onclick="actualizarDatos();"><img src="img/reload.png" class="h80 paddingTop5p"></a></div>-->
+                    <div class="col-30 right"><a href="#" class="link icon-only open-panel"><i class="icon icon-bars"></i></a></div>
+                  
+                </div>
+            </div>
+              
+            
+              
+            <div class="page-content pagina">
+                <div class="col-100 list-block  center marginTop15px">
+                        <ul> 
+                            <li class="item-content fondo-gris">
+                              <div class="item-title label w30h40px fondo-gris"><img src="img/lupa.png" class="h80 paddingTop5p"></div>
+                              <div class="item-input fondo-gris">
+                                <input type="text" placeholder="Buscar..." id="autocomplete" onkeyup="buscarEncuestas();"></div>
+                            </li>
+                        </ul>
+                      </div>
+                <div class="content-block-title azul">Encuestas relacionadas:</div>
+                <div class="list-block">
+                    <ul id='lblEncuestas'>
+                    </ul>
+                </div>
+                
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div> 
+</body>
+</html>
+
